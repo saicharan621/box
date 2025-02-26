@@ -4,9 +4,9 @@ pipeline {
     environment {
         MAVEN_HOME = "/usr/share/maven"
         PATH = "${MAVEN_HOME}/bin:${PATH}"
-        SONARQUBE_NAME = "sonar-box"  // Update to match the correct SonarQube configuration name
+        SONARQUBE_NAME = "sonar-box"  
         SONAR_URL = "http://3.110.104.81:9000"
-        SONAR_TOKEN = "OBUJItNJUISIFMF+Sx+AayBOqY1fBHcabXa86w3JBn0"
+        SONAR_TOKEN = "OBUJItNJUISIFMF+Sx+AayBOqY1fBHcabXa86w3JBn0="
         DOCKER_HUB_USER = "saicharan6771"
         DOCKER_HUB_PASS = "Welcome@123"
         DOCKER_IMAGE = "saicharan6771/helloworld"
