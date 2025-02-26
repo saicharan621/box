@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         GIT_REPO = 'https://github.com/saicharan621/box.git' 
-        GIT_CREDENTIALS = 'github-token'  // Ensure this credential exists in Jenkins
+        GIT_CREDENTIALS = 'github-token'  
         NEXUS_URL = '15.206.210.117:8081'
         NEXUS_REPO = 'maven-releases'
         DOCKER_IMAGE = 'saicharan6771/helloworld'
         EKS_CLUSTER = 'helloworld-cluster'
         SONAR_HOST_URL = 'http://3.110.104.81:9000'
-        SONAR_TOKEN = 'your-sonar-token'  // Store this in Jenkins Credentials!
+        SONAR_TOKEN = 'OBUJItNJUISIFMF+Sx+AayBOqY1fBHcabXa86w3JBn0'  
     }
 
     stages {
@@ -31,7 +31,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    withSonarQubeEnv('SonarQube') {  // Name should match your SonarQube configuration
+                    withSonarQubeEnv('sonar-box') {  // ✅ Using your correct SonarQube name
                         sh """
                         mvn sonar:sonar \
                         -Dsonar.host.url=${SONAR_HOST_URL} \
