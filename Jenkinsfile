@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'https://github.com/saicharan621/helloworld.git'  // Update with your Git repo
+        GIT_REPO = 'https://github.com/saicharan621/box.git' 
+        GIT_CREDENTIALS = 'github-token'  // ID of GitHub PAT stored in Jenkins credentials
         NEXUS_URL = '15.206.210.117:8081'
         NEXUS_REPO = 'maven-releases'
         DOCKER_IMAGE = 'saicharan6771/helloworld'
@@ -12,7 +13,16 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: "${GIT_REPO}"
+                script {
+                    checkout([
+                        $class: 'GitSCM', 
+                        branches: [[name: '*/main']], 
+                        userRemoteConfigs: [[
+                            url: "${GIT_REPO}",
+                            credentialsId: "${GIT_CREDENTIALS}"
+                        ]]
+                    ])
+                }
             }
         }
 
