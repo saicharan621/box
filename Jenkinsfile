@@ -35,18 +35,24 @@ pipeline {
             }
         }
 
-        stage('Push JAR to Nexus') {
+        stage('Set Version and Push JAR to Nexus') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                    sh 'mvn deploy -DaltDeploymentRepository=nexus::default::http://$NEXUS_USER:$NEXUS_PASS@$NEXUS_URL/repository/maven-releases/'
+                script {
+                    def timestamp = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
+                    env.BUILD_VERSION = "1.0.0-${timestamp}"
                 }
+                sh '''
+                mvn versions:set -DnewVersion=$BUILD_VERSION
+                mvn deploy -DaltDeploymentRepository=nexus::default::http://$NEXUS_URL/repository/maven-releases/
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $DOCKER_IMAGE .
+                docker build -t $DOCKER_IMAGE:$BUILD_VERSION .
+                docker tag $DOCKER_IMAGE:$BUILD_VERSION $DOCKER_IMAGE:latest
                 docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
                 '''
             }
@@ -54,7 +60,10 @@ pipeline {
 
         stage('Push Image to Docker Hub') {
             steps {
-                sh 'docker push $DOCKER_IMAGE'
+                sh '''
+                docker push $DOCKER_IMAGE:$BUILD_VERSION
+                docker push $DOCKER_IMAGE:latest
+                '''
             }
         }
 
@@ -62,6 +71,7 @@ pipeline {
             steps {
                 sh '''
                 aws eks --region us-east-1 update-kubeconfig --name $EKS_CLUSTER
+                sed -i "s|IMAGE_PLACEHOLDER|$DOCKER_IMAGE:$BUILD_VERSION|g" deployment.yaml
                 kubectl apply -f deployment.yaml
                 '''
             }
@@ -70,7 +80,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment Successful!"
+            echo "✅ Deployment Successful! Version: $BUILD_VERSION"
         }
         failure {
             echo "❌ Deployment Failed!"
