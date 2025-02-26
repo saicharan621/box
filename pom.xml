@@ -2,34 +2,37 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
     <artifactId>hello-world-game</artifactId>
-
-    <!-- Auto-increment version using timestamp -->
-    <version>1.0.0-${maven.build.timestamp}</version>
+    <version>1.0.0-${timestamp}</version>  <!-- Use ${timestamp} instead -->
 
     <properties>
         <maven.build.timestamp.format>yyyyMMdd-HHmmss</maven.build.timestamp.format>
+        <timestamp>${maven.build.timestamp}</timestamp>  <!-- Define the timestamp property -->
     </properties>
 
     <build>
         <plugins>
-            <!-- Plugin to auto-update the version -->
+            <!-- Plugin to set timestamp -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
                     <execution>
-                        <id>timestamp-version</id>
+                        <id>set-timestamp</id>
+                        <phase>validate</phase>
                         <goals>
-                            <goal>parse-version</goal>
+                            <goal>resources</goal>
                         </goals>
                         <configuration>
-                            <propertyPrefix>parsedVersion</propertyPrefix>
+                            <delimiters>
+                                <delimiter>@</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
                         </configuration>
                     </execution>
                 </executions>

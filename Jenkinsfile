@@ -22,16 +22,6 @@ pipeline {
             }
         }
 
-        stage('Setup Maven Settings') {
-            steps {
-                sh '''
-                mkdir -p /var/lib/jenkins/.m2
-                cp settings.xml /var/lib/jenkins/.m2/settings.xml
-                chmod 600 /var/lib/jenkins/.m2/settings.xml
-                '''
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-box') {
