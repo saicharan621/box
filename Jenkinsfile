@@ -10,8 +10,9 @@ pipeline {
         DOCKER_HUB_USER = "saicharan6771"
         DOCKER_HUB_PASS = "Welcome@123"
         DOCKER_IMAGE = "saicharan6771/helloworld"
-        NEXUS_URL = "15.206.210.117:8081"
+        NEXUS_URL = "http://15.206.210.117:8081"
         EKS_CLUSTER = "helloworld-cluster"
+        MAVEN_SETTINGS = "/var/lib/jenkins/.m2/settings.xml"
     }
 
     stages {
@@ -21,17 +22,27 @@ pipeline {
             }
         }
 
+        stage('Setup Maven Settings') {
+            steps {
+                sh '''
+                mkdir -p /var/lib/jenkins/.m2
+                cp settings.xml /var/lib/jenkins/.m2/settings.xml
+                chmod 600 /var/lib/jenkins/.m2/settings.xml
+                '''
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-box') {
-                    sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN'
+                    sh 'mvn clean verify sonar:sonar -s $MAVEN_SETTINGS -Dsonar.login=$SONAR_TOKEN'
                 }
             }
         }
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean package -s $MAVEN_SETTINGS'
             }
         }
 
@@ -42,8 +53,8 @@ pipeline {
                     env.BUILD_VERSION = "1.0.0-${timestamp}"
                 }
                 sh '''
-                mvn versions:set -DnewVersion=$BUILD_VERSION
-                mvn deploy -DaltDeploymentRepository=nexus::default::http://$NEXUS_URL/repository/maven-releases/
+                mvn versions:set -DnewVersion=$BUILD_VERSION -s $MAVEN_SETTINGS
+                mvn deploy -s $MAVEN_SETTINGS
                 '''
             }
         }
