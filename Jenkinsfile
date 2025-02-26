@@ -3,11 +3,13 @@ pipeline {
 
     environment {
         GIT_REPO = 'https://github.com/saicharan621/box.git' 
-        GIT_CREDENTIALS = 'github-token'  // ID of GitHub PAT stored in Jenkins credentials
+        GIT_CREDENTIALS = 'github-token'  // Ensure this credential exists in Jenkins
         NEXUS_URL = '15.206.210.117:8081'
         NEXUS_REPO = 'maven-releases'
         DOCKER_IMAGE = 'saicharan6771/helloworld'
         EKS_CLUSTER = 'helloworld-cluster'
+        SONAR_HOST_URL = 'http://3.110.104.81:9000'
+        SONAR_TOKEN = 'your-sonar-token'  // Store this in Jenkins Credentials!
     }
 
     stages {
@@ -29,8 +31,12 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    withSonarQubeEnv('SonarQube') {
-                        sh 'mvn sonar:sonar -Dsonar.host.url=http://3.110.104.81:9000 -Dsonar.login=admin -Dsonar.password=admin123'
+                    withSonarQubeEnv('SonarQube') {  // Name should match your SonarQube configuration
+                        sh """
+                        mvn sonar:sonar \
+                        -Dsonar.host.url=${SONAR_HOST_URL} \
+                        -Dsonar.login=${SONAR_TOKEN}
+                        """
                     }
                 }
             }
