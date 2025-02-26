@@ -4,7 +4,7 @@ pipeline {
     environment {
         MAVEN_HOME = "/usr/share/maven"
         PATH = "${MAVEN_HOME}/bin:${PATH}"
-        SONARQUBE_NAME = "sonar-box"  // Update to match the correct SonarQube configuration name
+        SONARQUBE_NAME = "sonar-box"
         SONAR_URL = "http://3.110.104.81:9000"
         SONAR_TOKEN = "squ_f7d1496e2b53a5c1d19b66130385a573ddd1ac43"
         DOCKER_HUB_USER = "saicharan6771"
@@ -37,7 +37,9 @@ pipeline {
 
         stage('Push JAR to Nexus') {
             steps {
-                sh 'mvn deploy -DaltDeploymentRepository=nexus::default::http://$NEXUS_URL/repository/maven-releases/'
+                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh 'mvn deploy -DaltDeploymentRepository=nexus::default::http://$NEXUS_USER:$NEXUS_PASS@$NEXUS_URL/repository/maven-releases/'
+                }
             }
         }
 
