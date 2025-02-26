@@ -6,7 +6,7 @@ pipeline {
         PATH = "${MAVEN_HOME}/bin:${PATH}"
         SONARQUBE_NAME = "sonar-box"  
         SONAR_URL = "http://3.110.104.81:9000"
-        SONAR_TOKEN = "OBUJItNJUISIFMF+Sx+AayBOqY1fBHcabXa86w3JBn0="
+        SONAR_TOKEN = "squ_f7d1496e2b53a5c1d19b66130385a573ddd1ac43"
         DOCKER_HUB_USER = "saicharan6771"
         DOCKER_HUB_PASS = "Welcome@123"
         DOCKER_IMAGE = "saicharan6771/helloworld"
@@ -24,7 +24,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-box') {
-                    sh 'mvn clean verify sonar:sonar -Dsonar.host.url=$SONAR_URL -Dsonar.login=$SONAR_TOKEN'
+                    sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN'
                 }
             }
         }
