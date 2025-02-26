@@ -31,6 +31,7 @@ pipeline {
                     protocol: 'http',
                     nexusUrl: '15.206.210.117:8081',
                     repository: 'maven-releases',
+                    credentialsId: 'nexus-credentials',   // ✅ FIXED: Added Required Credentials ID
                     groupId: 'com.example',
                     version: '1.0.0',
                     artifacts: [
