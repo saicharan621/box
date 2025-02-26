@@ -1,14 +1,14 @@
-# Use official OpenJDK image as base
+# Use OpenJDK 17 as the base image
 FROM openjdk:17-jdk-slim
 
-# Set working directory inside the container
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the JAR file from the target folder to the container
-COPY target/hello-world-game-*.jar /app/hello-world-game.jar
+# Copy the JAR file from the target directory into the container
+COPY target/hello-world-game-*.jar /app/app.jar
 
-# Expose the port your app runs on
+# Expose the application port (modify if needed)
 EXPOSE 8080
 
-# Run the application
-CMD ["java", "-jar", "/app/hello-world-game.jar"]
+# Run the JAR file
+CMD ["java", "-jar", "/app/app.jar"]
