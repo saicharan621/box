@@ -1,19 +1,30 @@
 pipeline {
     agent any
 
+    environment {
+        MAVEN_HOME = "/usr/share/maven"
+        PATH = "${MAVEN_HOME}/bin:${PATH}"
+        SONARQUBE_NAME = "sonar-box"  // Update to match the correct SonarQube configuration name
+        SONAR_URL = "http://3.110.104.81:9000"
+        SONAR_TOKEN = "squ_f7d1496e2b53a5c1d19b66130385a573ddd1ac43"
+        DOCKER_HUB_USER = "saicharan6771"
+        DOCKER_HUB_PASS = "Welcome@123"
+        DOCKER_IMAGE = "saicharan6771/helloworld"
+        NEXUS_URL = "15.206.210.117:8081"
+        EKS_CLUSTER = "helloworld-cluster"
+    }
+
     stages {
-        stage('Checkout Code') {
+        stage('Checkout Code from GitHub') {
             steps {
-                git 'https://github.com/saicharan621/box.git'
+                git branch: 'main', url: 'https://github.com/saicharan621/box.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    withSonarQubeEnv('SonarQube') {
-                        sh 'mvn sonar:sonar'
-                    }
+                withSonarQubeEnv('sonar-box') {
+                    sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN'
                 }
             }
         }
@@ -26,43 +37,31 @@ pipeline {
 
         stage('Push JAR to Nexus') {
             steps {
-                nexusArtifactUploader(
-                    nexusVersion: 'nexus3',
-                    protocol: 'http',
-                    nexusUrl: '15.206.210.117:8081',
-                    repository: 'maven-releases',
-                    credentialsId: 'nexus-credentials',   // ✅ FIXED: Added Required Credentials ID
-                    groupId: 'com.example',
-                    version: '1.0.0',
-                    artifacts: [
-                        [
-                            artifactId: 'hello-world-game',
-                            classifier: '',
-                            type: 'jar',
-                            file: 'target/hello-world-game-1.0.0.jar'
-                        ]
-                    ]
-                )
+                sh 'mvn deploy -DaltDeploymentRepository=nexus::default::http://$NEXUS_URL/repository/maven-releases/'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t saicharan6771/helloworld:1.0.0 .'
+                sh '''
+                docker build -t $DOCKER_IMAGE .
+                docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
+                '''
             }
         }
 
         stage('Push Image to Docker Hub') {
             steps {
-                withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
-                    sh 'docker push saicharan6771/helloworld:1.0.0'
-                }
+                sh 'docker push $DOCKER_IMAGE'
             }
         }
 
         stage('Deploy to EKS') {
             steps {
-                sh 'kubectl apply -f deployment.yaml'
+                sh '''
+                aws eks --region us-east-1 update-kubeconfig --name $EKS_CLUSTER
+                kubectl apply -f deployment.yaml
+                '''
             }
         }
     }
