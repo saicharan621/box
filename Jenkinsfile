@@ -2,42 +2,29 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'https://github.com/saicharan621/box.git' 
-        GIT_CREDENTIALS = 'github-token'  
-        NEXUS_URL = '15.206.210.117:8081'
-        NEXUS_REPO = 'maven-releases'
-        DOCKER_IMAGE = 'saicharan6771/helloworld'
-        EKS_CLUSTER = 'helloworld-cluster'
-        SONAR_HOST_URL = 'http://3.110.104.81:9000'
-        SONAR_TOKEN = 'OBUJItNJUISIFMF+Sx+AayBOqY1fBHcabXa86w3JBn0'  
+        MAVEN_HOME = "/usr/share/maven"
+        PATH = "${MAVEN_HOME}/bin:${PATH}"
+        SONARQUBE_NAME = "sonar-box"  // Update to match the correct SonarQube configuration name
+        SONAR_URL = "http://3.110.104.81:9000"
+        SONAR_TOKEN = "OBUJItNJUISIFMF+Sx+AayBOqY1fBHcabXa86w3JBn0"
+        DOCKER_HUB_USER = "saicharan6771"
+        DOCKER_HUB_PASS = "Welcome@123"
+        DOCKER_IMAGE = "saicharan6771/helloworld"
+        NEXUS_URL = "15.206.210.117:8081"
+        EKS_CLUSTER = "helloworld-cluster"
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout Code from GitHub') {
             steps {
-                script {
-                    checkout([
-                        $class: 'GitSCM', 
-                        branches: [[name: '*/main']], 
-                        userRemoteConfigs: [[
-                            url: "${GIT_REPO}",
-                            credentialsId: "${GIT_CREDENTIALS}"
-                        ]]
-                    ])
-                }
+                git branch: 'main', url: 'https://github.com/saicharan621/box.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    withSonarQubeEnv('sonar-box') {  // ✅ Using your correct SonarQube name
-                        sh """
-                        mvn sonar:sonar \
-                        -Dsonar.host.url=${SONAR_HOST_URL} \
-                        -Dsonar.login=${SONAR_TOKEN}
-                        """
-                    }
+                withSonarQubeEnv('sonar-box') {
+                    sh 'mvn clean verify sonar:sonar -Dsonar.host.url=$SONAR_URL -Dsonar.login=$SONAR_TOKEN'
                 }
             }
         }
@@ -50,57 +37,41 @@ pipeline {
 
         stage('Push JAR to Nexus') {
             steps {
-                sh """
-                mvn deploy:deploy-file \
-                -DgroupId=com.helloworld \
-                -DartifactId=helloworld \
-                -Dversion=1.0.0 \
-                -Dpackaging=jar \
-                -Dfile=target/helloworld-1.0.0.jar \
-                -DrepositoryId=nexus \
-                -Durl=http://${NEXUS_URL}/repository/${NEXUS_REPO}/ \
-                -DgeneratePom=true \
-                -Dauth.username=admin -Dauth.password=admin
-                """
+                sh 'mvn deploy -DaltDeploymentRepository=nexus::default::http://$NEXUS_URL/repository/maven-releases/'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh """
-                docker build -t ${DOCKER_IMAGE}:latest .
-                docker tag ${DOCKER_IMAGE}:latest ${DOCKER_IMAGE}:1.0
-                """
+                sh '''
+                docker build -t $DOCKER_IMAGE .
+                docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
+                '''
             }
         }
 
         stage('Push Image to Docker Hub') {
             steps {
-                sh """
-                echo "Welcome@123" | docker login -u saicharan6771 --password-stdin
-                docker push ${DOCKER_IMAGE}:latest
-                docker push ${DOCKER_IMAGE}:1.0
-                """
+                sh 'docker push $DOCKER_IMAGE'
             }
         }
 
         stage('Deploy to EKS') {
             steps {
-                sh """
-                aws eks update-kubeconfig --region ap-south-1 --name ${EKS_CLUSTER}
+                sh '''
+                aws eks --region us-east-1 update-kubeconfig --name $EKS_CLUSTER
                 kubectl apply -f deployment.yaml
-                kubectl apply -f service.yaml
-                """
+                '''
             }
         }
     }
 
     post {
         success {
-            echo '✅ Deployment Successful!'
+            echo "✅ Deployment Successful!"
         }
         failure {
-            echo '❌ Deployment Failed!'
+            echo "❌ Deployment Failed!"
         }
     }
 }
