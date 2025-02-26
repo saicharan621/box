@@ -25,14 +25,14 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-box') {
-                    sh 'mvn clean verify sonar:sonar -s $MAVEN_SETTINGS -Dsonar.login=$SONAR_TOKEN'
+                    sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN'
                 }
             }
         }
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package -s $MAVEN_SETTINGS'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
@@ -43,8 +43,8 @@ pipeline {
                     env.BUILD_VERSION = "1.0.0-${timestamp}"
                 }
                 sh '''
-                mvn versions:set -DnewVersion=$BUILD_VERSION -s $MAVEN_SETTINGS
-                mvn deploy -s $MAVEN_SETTINGS
+                mvn versions:set -DnewVersion=$BUILD_VERSION
+                mvn deploy
                 '''
             }
         }
@@ -54,7 +54,6 @@ pipeline {
                 sh '''
                 docker build -t $DOCKER_IMAGE:$BUILD_VERSION .
                 docker tag $DOCKER_IMAGE:$BUILD_VERSION $DOCKER_IMAGE:latest
-                docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
                 '''
             }
         }
@@ -62,6 +61,7 @@ pipeline {
         stage('Push Image to Docker Hub') {
             steps {
                 sh '''
+                echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
                 docker push $DOCKER_IMAGE:$BUILD_VERSION
                 docker push $DOCKER_IMAGE:latest
                 '''
