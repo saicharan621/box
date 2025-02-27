@@ -4,8 +4,8 @@ FROM openjdk:17-jdk-slim
 # Set working directory
 WORKDIR /app
 
-# Copy the JAR file from the Maven target directory
-COPY target/hello-world-game-*.jar /app/app.jar
+# Copy the exact JAR file from the target directory
+COPY target/hello-world-game-1.0.0-20250227-070448.jar /app/app.jar
 
 # Expose application port
 EXPOSE 8080
