@@ -1,6 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
@@ -13,16 +13,44 @@
     <properties>
         <maven.build.timestamp.format>yyyyMMdd-HHmmss</maven.build.timestamp.format>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>17</java.version>
+        <java.version>11</java.version>
+        <spring.boot.version>2.7.5</spring.boot.version>  <!-- Define Spring Boot version -->
     </properties>
 
     <dependencies>
-        <!-- Spring Boot Starter Web -->
+        <!-- Spring Boot Web Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Starter Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <version>${spring.boot.version}</version>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>nexus</id>
+            <url>http://15.206.210.117:8081/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus</id>
+            <url>http://15.206.210.117:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <build>
         <plugins>
@@ -37,16 +65,20 @@
                 </configuration>
             </plugin>
 
-            <!-- Spring Boot Maven Plugin (Fixes JAR execution issue) -->
+            <!-- Build Helper Plugin for Timestamped Versioning -->
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
                     <execution>
+                        <id>timestamp-version</id>
                         <goals>
-                            <goal>repackage</goal>
+                            <goal>parse-version</goal>
                         </goals>
+                        <configuration>
+                            <propertyPrefix>parsedVersion</propertyPrefix>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -59,16 +91,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <distributionManagement>
-        <repository>
-            <id>nexus</id>
-            <url>http://15.206.210.117:8081/repository/maven-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>nexus</id>
-            <url>http://15.206.210.117:8081/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
 </project>
