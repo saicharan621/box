@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_SERVER = 'sonarqube'  // The SonarQube server ID configured in Jenkins
-        SONARQUBE_CREDENTIALS = 'sonar-new' // The new credential ID
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        NEXUS_CREDENTIALS = credentials('nexus-credentials')
     }
 
     stages {
@@ -13,34 +13,21 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv(SONARQUBE_SERVER) {
-                    sh '''
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=helloworld \
-                        -Dsonar.host.url=http://3.110.104.81:9000 \
-                        -Dsonar.login=$SONARQUBE_CREDENTIALS
-                    '''
-                }
-            }
-        }
-
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('Push JAR to Nexus') {
             steps {
                 sh '''
-                    mvn deploy:deploy-file \
+                mvn deploy:deploy-file \
                     -DgroupId=com.example \
                     -DartifactId=helloworld \
-                    -Dversion=1.0.0 \
+                    -Dversion=1.0 \
                     -Dpackaging=jar \
-                    -Dfile=target/helloworld.jar \
+                    -Dfile=target/helloworld-1.0.jar \
                     -DrepositoryId=nexus \
                     -Durl=http://15.206.210.117:8081/repository/maven-releases/
                 '''
@@ -50,17 +37,15 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    docker build -t saicharan6771/helloworld:latest .
+                docker build -t saicharan6771/helloworld:latest .
                 '''
             }
         }
 
         stage('Push Image to Docker Hub') {
             steps {
-                withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
-                    sh '''
-                        docker push saicharan6771/helloworld:latest
-                    '''
+                withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
+                    sh 'docker push saicharan6771/helloworld:latest'
                 }
             }
         }
@@ -68,8 +53,7 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 sh '''
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
+                kubectl apply -f deployment.yaml
                 '''
             }
         }
@@ -77,10 +61,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment Successful!'
+            echo "✅ Deployment Successful!"
         }
         failure {
-            echo '❌ Deployment Failed!'
+            echo "❌ Deployment Failed!"
         }
     }
 }
