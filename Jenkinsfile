@@ -2,18 +2,12 @@ pipeline {
     agent any
 
     environment {
-        MAVEN_HOME = "/usr/share/maven"
-        PATH = "${MAVEN_HOME}/bin:${PATH}"
-        SONARQUBE_NAME = "sonar-box"
-        SONAR_URL = "http://3.110.104.81:9000"
-        DOCKER_IMAGE = "saicharan6771/helloworld"
-        NEXUS_URL = "http://15.206.210.117:8081"
-        EKS_CLUSTER = "helloworld-cluster"
-        MAVEN_SETTINGS = "/var/lib/jenkins/.m2/settings.xml"
+        SONARQUBE_SERVER = 'sonarqube'  // The SonarQube server ID configured in Jenkins
+        SONARQUBE_CREDENTIALS = 'sonar-new' // The new credential ID
     }
 
     stages {
-        stage('Checkout Code from GitHub') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/saicharan621/box.git'
             }
@@ -21,31 +15,34 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar-box') {
-                    withCredentials([string(credentialsId: 'sonar-box', variable: 'SONAR_TOKEN')]) {
-                        sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN -X'
-                    }
+                withSonarQubeEnv(SONARQUBE_SERVER) {
+                    sh '''
+                        mvn sonar:sonar \
+                        -Dsonar.projectKey=helloworld \
+                        -Dsonar.host.url=http://3.110.104.81:9000 \
+                        -Dsonar.login=$SONARQUBE_CREDENTIALS
+                    '''
                 }
             }
         }
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package -DskipTests -e'
-                sh 'ls -lh target/'
+                sh 'mvn clean package'
             }
         }
 
-        stage('Set Version and Push JAR to Nexus') {
+        stage('Push JAR to Nexus') {
             steps {
-                script {
-                    def timestamp = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
-                    env.BUILD_VERSION = "1.0.0-${timestamp}"
-                }
                 sh '''
-                    mvn versions:set -DnewVersion=$BUILD_VERSION -e
-                    mvn clean deploy -s $MAVEN_SETTINGS -e
-                    ls -lh target/
+                    mvn deploy:deploy-file \
+                    -DgroupId=com.example \
+                    -DartifactId=helloworld \
+                    -Dversion=1.0.0 \
+                    -Dpackaging=jar \
+                    -Dfile=target/helloworld.jar \
+                    -DrepositoryId=nexus \
+                    -Durl=http://15.206.210.117:8081/repository/maven-releases/
                 '''
             }
         }
@@ -53,19 +50,16 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    docker build --no-cache -t $DOCKER_IMAGE:$BUILD_VERSION .
-                    docker tag $DOCKER_IMAGE:$BUILD_VERSION $DOCKER_IMAGE:latest
+                    docker build -t saicharan6771/helloworld:latest .
                 '''
             }
         }
 
         stage('Push Image to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
+                withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
                     sh '''
-                        echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
-                        docker push $DOCKER_IMAGE:$BUILD_VERSION
-                        docker push $DOCKER_IMAGE:latest
+                        docker push saicharan6771/helloworld:latest
                     '''
                 }
             }
@@ -74,9 +68,8 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 sh '''
-                    aws eks --region ap-south-1 update-kubeconfig --name $EKS_CLUSTER
-                    sed -i "s|IMAGE_PLACEHOLDER|$DOCKER_IMAGE:$BUILD_VERSION|g" deployment.yaml
-                    kubectl apply -f deployment.yaml
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply -f k8s/service.yaml
                 '''
             }
         }
@@ -84,10 +77,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment Successful! Version: $BUILD_VERSION"
+            echo '✅ Deployment Successful!'
         }
         failure {
-            echo "❌ Deployment Failed!"
+            echo '❌ Deployment Failed!'
         }
     }
 }
