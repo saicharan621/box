@@ -1,14 +1,14 @@
-# Use OpenJDK 17
+# Use OpenJDK 17 as the base image
 FROM openjdk:17-jdk-slim
 
-# Set working directory
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the exact JAR file from the target directory
+# Copy the built JAR file from the target directory
 COPY target/hello-world-game-1.0.0-20250227-081039.jar /app/app.jar
 
-# Expose application port
+# Expose port 8080 for the application
 EXPOSE 8080
 
-# Run the application
+# Command to run the application
 CMD ["java", "-jar", "/app/app.jar"]
