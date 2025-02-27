@@ -1,14 +1,14 @@
 # Use OpenJDK 17 as the base image
 FROM openjdk:17-jdk-slim
 
-# Set the working directory inside the container
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy the JAR file to the container (Ensuring single JAR copy)
-COPY target/*.jar /app/app.jar
+# Copy the built JAR file to the container
+COPY target/*-SNAPSHOT.jar /app/app.jar
 
-# Expose the application port (modify if needed)
+# Expose the application port
 EXPOSE 8080
 
-# Run the JAR file
+# Run the application
 CMD ["java", "-jar", "/app/app.jar"]
