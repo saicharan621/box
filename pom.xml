@@ -19,10 +19,8 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>3.2.2</version> <!-- Ensure version is defined -->
+            <version>3.2.2</version>
         </dependency>
-        
-        <!-- Additional Dependencies (Add if required) -->
     </dependencies>
 
     <build>
@@ -35,6 +33,20 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Jar Plugin (Ensures Executable JAR) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.example.HelloWorldApplication</mainClass> 
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
 
@@ -58,4 +70,5 @@
             <url>http://15.206.210.117:8081/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
+
 </project>
