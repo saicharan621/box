@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: helloworld
-          image: saicharan6771/helloworld:latest  # Ensure this matches your Docker Hub image
+          image: saicharan6771/helloworld:latest
           ports:
             - containerPort: 8080
 
@@ -26,8 +26,4 @@ metadata:
 spec:
   type: LoadBalancer
   selector:
-    app: helloworld
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080
+    app: hell
