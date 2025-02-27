@@ -33,6 +33,7 @@ pipeline {
         stage('Build with Maven') {
             steps {
                 sh 'mvn clean package -DskipTests'
+                sh 'ls -lh target/' // Debug: Ensure JAR exists
             }
         }
 
@@ -44,7 +45,7 @@ pipeline {
                 }
                 sh '''
                 mvn versions:set -DnewVersion=$BUILD_VERSION
-                mvn deploy
+                mvn clean deploy -s $MAVEN_SETTINGS
                 '''
             }
         }
@@ -52,7 +53,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $DOCKER_IMAGE:$BUILD_VERSION .
+                docker build --no-cache -t $DOCKER_IMAGE:$BUILD_VERSION .
                 docker tag $DOCKER_IMAGE:$BUILD_VERSION $DOCKER_IMAGE:latest
                 '''
             }
