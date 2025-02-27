@@ -23,14 +23,14 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-box') {
-                    sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN'
+                    sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN -e' // Added -e for error stack trace
                 }
             }
         }
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package -DskipTests -e' // Added -e for error stack trace
                 sh 'ls -lh target/' // Debug: Ensure JAR is created
             }
         }
@@ -42,8 +42,8 @@ pipeline {
                     env.BUILD_VERSION = "1.0.0-${timestamp}"
                 }
                 sh '''
-                    mvn versions:set -DnewVersion=$BUILD_VERSION
-                    mvn clean deploy -s $MAVEN_SETTINGS
+                    mvn versions:set -DnewVersion=$BUILD_VERSION -e
+                    mvn clean deploy -s $MAVEN_SETTINGS -e
                     ls -lh target/ # Debug: Ensure JAR exists before Docker build
                 '''
             }
