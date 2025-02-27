@@ -22,7 +22,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-box') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'sonar-box', variable: 'SONAR_TOKEN')]) {
                         sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN -X'
                     }
                 }
@@ -63,7 +63,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
                     sh '''
-                        echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin > /dev/null 2>&1
+                        echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
                         docker push $DOCKER_IMAGE:$BUILD_VERSION
                         docker push $DOCKER_IMAGE:latest
                     '''
@@ -75,7 +75,6 @@ pipeline {
             steps {
                 sh '''
                     aws eks --region ap-south-1 update-kubeconfig --name $EKS_CLUSTER
-                    cp deployment.yaml deployment.yaml.bak
                     sed -i "s|IMAGE_PLACEHOLDER|$DOCKER_IMAGE:$BUILD_VERSION|g" deployment.yaml
                     kubectl apply -f deployment.yaml
                 '''
