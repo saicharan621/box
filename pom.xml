@@ -21,6 +21,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <version>3.2.2</version>
         </dependency>
+
+        <!-- Spring Boot Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <version>3.2.2</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -44,10 +51,24 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.example.HelloWorldApplication</mainClass> 
+                            <mainClass>com.example.hellogame.HelloWorldApplication</mainClass> 
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+
+            <!-- Spring Boot Maven Plugin (Creates Fat JAR) -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.2.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Maven Deploy Plugin -->
