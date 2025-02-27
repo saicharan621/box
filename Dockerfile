@@ -1,13 +1,13 @@
-# Use OpenJDK 17 as the base image
+# Use OpenJDK 17
 FROM openjdk:17-jdk-slim
 
-# Set working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy the built JAR file to the container
-COPY target/*-SNAPSHOT.jar /app/app.jar
+# Copy the JAR file from the Maven target directory
+COPY target/hello-world-game-*.jar /app/app.jar
 
-# Expose the application port
+# Expose application port
 EXPOSE 8080
 
 # Run the application

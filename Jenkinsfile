@@ -33,7 +33,7 @@ pipeline {
         stage('Build with Maven') {
             steps {
                 sh 'mvn clean package -DskipTests'
-                sh 'ls -lh target/' // Debug: Ensure JAR exists
+                sh 'ls -lh target/' // ✅ Debug: Ensure JAR is created
             }
         }
 
@@ -46,6 +46,7 @@ pipeline {
                 sh '''
                 mvn versions:set -DnewVersion=$BUILD_VERSION
                 mvn clean deploy -s $MAVEN_SETTINGS
+                ls -lh target/  # ✅ Debug: Ensure JAR exists before Docker build
                 '''
             }
         }
