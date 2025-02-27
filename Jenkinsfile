@@ -73,7 +73,7 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 sh '''
-                aws eks --region us-east-1 update-kubeconfig --name $EKS_CLUSTER
+                aws eks --region ap-south-1 update-kubeconfig --name $EKS_CLUSTER
                 sed -i "s|IMAGE_PLACEHOLDER|$DOCKER_IMAGE:$BUILD_VERSION|g" deployment.yaml
                 kubectl apply -f deployment.yaml
                 '''
